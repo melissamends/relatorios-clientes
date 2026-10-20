@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SFI Chips · Youssef | Relatório de Performance</title>
+<meta name="description" content="Dashboard de performance Meta Ads">
+<style>
+:root{
+  --bg:#0a0a0c; --panel:#121215; --panel2:#17171b; --text:#f6f6f3;
+  --muted:#90909a; --line:#2a2a31; --accent:#e62d36; --accent2:#ff5a62;
+  --good:#7fd8a4; --warn:#f5c26b; --radius:22px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:
+    radial-gradient(circle at 82% 0%,rgba(230,45,54,.13),transparent 28%),
+    var(--bg);
+}
+button,input{font:inherit}
+.container{width:min(1220px,calc(100% - 34px));margin:auto}
+.header{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:28px 0 14px}
+.brand{display:flex;align-items:center;gap:13px}
+.logo{width:46px;height:46px;border:1px solid var(--line);border-radius:14px;display:grid;place-items:center;font-weight:850;background:#111}
+.kicker{font-size:11px;letter-spacing:.14em;color:var(--muted);font-weight:750}
+.brand-name{margin-top:4px;font-size:16px;font-weight:760}
+.header-right{text-align:right;color:var(--muted);font-size:12px;line-height:1.6}
+.hero{
+  margin:16px 0 26px;padding:36px;border:1px solid var(--line);border-radius:28px;
+  background:linear-gradient(135deg,#111114 0%,#17171b 62%,#211416 100%);
+}
+.hero-top{display:flex;justify-content:space-between;gap:28px;align-items:flex-end}
+.hero h1{font-size:clamp(34px,5vw,60px);letter-spacing:-.052em;line-height:.98;margin:12px 0 14px;max-width:720px}
+.hero p{margin:0;color:#babac2;line-height:1.65;max-width:740px}
+.filters{display:flex;gap:10px;align-items:end;flex-wrap:wrap;margin-top:28px}
+.field label{display:block;font-size:11px;color:var(--muted);margin:0 0 7px;letter-spacing:.08em;text-transform:uppercase}
+.field input{
+  color:var(--text);background:#0e0e11;border:1px solid var(--line);border-radius:13px;padding:12px 14px;min-width:160px;color-scheme:dark
+}
+.apply{border:0;background:var(--accent);color:white;border-radius:13px;padding:13px 18px;font-weight:780;cursor:pointer}
+.quick{background:transparent;color:#c8c8cf;border:1px solid var(--line);border-radius:13px;padding:12px 15px;cursor:pointer}
+.period-chip{padding:10px 13px;border:1px solid rgba(230,45,54,.35);background:rgba(230,45,54,.07);border-radius:999px;color:#dfdfe5;font-size:12px}
+.section{padding:24px 0}
+.section-head{display:flex;justify-content:space-between;align-items:end;gap:18px;margin-bottom:16px}
+.section h2{margin:0;font-size:27px;letter-spacing:-.035em}
+.section-tag{font-size:11px;letter-spacing:.13em;color:var(--muted)}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:13px}
+.card{padding:22px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);min-height:150px}
+.card.accent{border-color:rgba(230,45,54,.5);background:linear-gradient(180deg,#191316,#121215)}
+.label{font-size:12px;color:var(--muted)}
+.value{font-size:32px;font-weight:850;letter-spacing:-.045em;margin:19px 0 5px}
+.note{font-size:11px;color:#777782}
+.grid2{display:grid;grid-template-columns:1.15fr .85fr;gap:13px}
+.panel{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);padding:22px;overflow:hidden}
+.panel h3{font-size:15px;margin:0 0 18px}
+.chart-wrap{height:245px;position:relative}
+svg{width:100%;height:100%;overflow:visible}
+.axis-text{fill:#73737d;font-size:10px}
+.line-spend{fill:none;stroke:#e9e9ed;stroke-width:2.3}
+.line-results{fill:none;stroke:var(--accent2);stroke-width:2.6}
+.dot-spend{fill:#e9e9ed}
+.dot-results{fill:var(--accent2)}
+.legend{display:flex;gap:18px;margin-top:8px;color:#a6a6ae;font-size:11px}
+.legend span:before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:#e9e9ed;margin-right:7px}
+.legend span:last-child:before{background:var(--accent2)}
+.auto-insight{display:flex;flex-direction:column;gap:11px}
+.insight{padding:16px;border:1px solid var(--line);border-radius:16px;background:#101013}
+.insight strong{font-size:12px}
+.insight p{margin:7px 0 0;color:#a9a9b1;line-height:1.55;font-size:12px}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:18px}
+table{width:100%;border-collapse:collapse;min-width:790px;background:var(--panel)}
+th,td{padding:15px 16px;text-align:left;border-bottom:1px solid #222228;font-size:12px}
+th{color:#84848e;font-weight:650;background:#101013;position:sticky;top:0}
+td.num,th.num{text-align:right;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+.campaign-name{font-weight:700;color:#ededf0}
+.status{display:inline-flex;align-items:center;padding:6px 9px;border-radius:999px;font-size:10px;white-space:nowrap}
+.status.good{color:var(--good);background:rgba(127,216,164,.08);border:1px solid rgba(127,216,164,.22)}
+.status.bad{color:#ff9298;background:rgba(230,45,54,.09);border:1px solid rgba(230,45,54,.25)}
+.creatives{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}
+.creative{border:1px solid var(--line);border-radius:19px;background:var(--panel);overflow:hidden}
+.thumb{height:170px;background:#0d0d10;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb-fallback{color:#64646d;font-size:11px}
+.creative-body{padding:16px}
+.creative-title{font-size:13px;font-weight:760;line-height:1.35;min-height:36px}
+.creative-campaign{font-size:10px;color:#73737d;margin:6px 0 14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.creative-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mini{padding-top:10px;border-top:1px solid #25252a}
+.mini b{display:block;font-size:13px}
+.mini span{font-size:9px;color:#777781}
+.empty{padding:34px;text-align:center;color:#777781;border:1px dashed var(--line);border-radius:18px}
+.footer{padding:36px 0 54px;border-top:1px solid var(--line);color:#66666f;font-size:11px;margin-top:30px}
+.loading{position:fixed;inset:0;background:rgba(10,10,12,.88);backdrop-filter:blur(8px);display:grid;place-items:center;z-index:9}
+.loading.hidden{display:none}
+.loader-box{padding:24px 28px;background:#141417;border:1px solid var(--line);border-radius:18px;color:#d7d7dc;font-size:13px}
+@media(max-width:960px){
+  .metrics{grid-template-columns:1fr 1fr}.grid2{grid-template-columns:1fr}.creatives{grid-template-columns:1fr 1fr}
+}
+@media(max-width:640px){
+  .container{width:min(100% - 20px,1220px)}.header{align-items:flex-start;flex-direction:column}.header-right{text-align:left}
+  .hero{padding:26px 20px}.hero-top{display:block}.metrics{grid-template-columns:1fr}.creatives{grid-template-columns:1fr}
+  .filters{align-items:stretch}.field{width:100%}.field input{width:100%}.apply,.quick{flex:1}.value{font-size:29px}
+}
+</style>
+</head>
+<body>
+<div class="loading" id="loading"><div class="loader-box">Atualizando dados do Meta Ads…</div></div>
+<div class="container">
+  <header class="header">
+    <div class="brand">
+      <div class="logo">SFI</div>
+      <div>
+        <div class="kicker">RELATÓRIO DE PERFORMANCE</div>
+        <div class="brand-name">SFI CHIPS · Youssef / DD19</div>
+      </div>
+    </div>
+    <div class="header-right">
+      Meta Ads<br>
+      <span id="dataStatus">Fonte automática · Dados_Meta</span>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-top">
+      <div>
+        <div class="kicker">VISÃO EXECUTIVA</div>
+        <h1>Performance do período, sem ruído.</h1>
+        <p>Selecione as datas para visualizar somente campanhas e criativos que tiveram atividade naquele intervalo.</p>
+      </div>
+      <div class="period-chip" id="periodLabel">—</div>
+    </div>
+
+    <div class="filters">
+      <div class="field"><label>De</label><input type="date" id="dateFrom"></div>
+      <div class="field"><label>Até</label><input type="date" id="dateTo"></div>
+      <button class="apply" id="applyBtn">Aplicar período</button>
+      <button class="quick" id="last7Btn">Últimos 7 dias</button>
+      <button class="quick" id="monthBtn">Mês atual</button>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><h2>Números do período</h2><div class="section-tag">KPIs PRINCIPAIS</div></div>
+    <div class="metrics">
+      <article class="card"><div class="label">Investimento</div><div class="value" id="mSpend">—</div><div class="note">Valor investido no período</div></article>
+      <article class="card"><div class="label">Conversas iniciadas</div><div class="value" id="mResults">—</div><div class="note">Resultados atribuídos pelo Meta</div></article>
+      <article class="card accent"><div class="label">Custo por resultado</div><div class="value" id="mCpr">—</div><div class="note">Investimento ÷ conversas</div></article>
+      <article class="card"><div class="label">Cliques no link</div><div class="value" id="mClicks">—</div><div class="note">Cliques em destinos do anúncio</div></article>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><h2>Evolução diária</h2><div class="section-tag">INVESTIMENTO × RESULTADOS</div></div>
+    <div class="grid2">
+      <div class="panel">
+        <h3>Comportamento no período</h3>
+        <div class="chart-wrap"><svg id="trendChart" viewBox="0 0 760 245" preserveAspectRatio="none"></svg></div>
+        <div class="legend"><span>Investimento</span><span>Conversas</span></div>
+      </div>
+      <div class="panel">
+        <h3>Leitura automática</h3>
+        <div class="auto-insight" id="autoInsights"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><h2>Campanhas do período</h2><div class="section-tag">SOMENTE COM ATIVIDADE</div></div>
+    <div class="table-wrap" id="campaignTableWrap">
+      <table>
+        <thead><tr><th>Campanha</th><th class="num">Investimento</th><th class="num">Conversas</th><th class="num">CPR</th><th class="num">Cliques</th><th>Situação</th></tr></thead>
+        <tbody id="campaignRows"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="campaignEmpty" style="display:none">Nenhuma campanha teve atividade no período selecionado.</div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><h2>Criativos do período</h2><div class="section-tag">RANKING POR RESULTADOS</div></div>
+    <div class="creatives" id="creativeGrid"></div>
+    <div class="empty" id="creativeEmpty" style="display:none">Nenhum criativo teve atividade no período selecionado.</div>
+  </section>
+
+  <footer class="footer">
+    Dados atualizados automaticamente via Meta Ads → Windsor.ai → Google Sheets.
+  </footer>
+</div>
+<script src="config.js"></script>
+<script src="dashboard.js"></script>
+</body>
+</html>
