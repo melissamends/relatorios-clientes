@@ -30,9 +30,22 @@ function num(v){
 }
 function money(n){return n.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});}
 function int(n){return Math.round(n).toLocaleString("pt-BR");}
-function humanDate(iso){
+function normalizeDate(v){
+  const s=String(v??"").trim();
+  if(!s) return "";
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  let m=s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);
+  if(m) return `${m[3]}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`;
+  const d=new Date(s);
+  if(Number.isNaN(d.getTime())) return "";
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+function humanDate(value){
+  const iso=normalizeDate(value);
   if(!iso)return "—";
-  return new Date(iso+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"short",year:"numeric"}).replace(".","");
+  const d=new Date(iso+"T12:00:00");
+  if(Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("pt-BR",{day:"2-digit",month:"short",year:"numeric"}).replace(".","");
 }
 function normalizeRows(rows){
   if(!rows.length)return[];
@@ -40,7 +53,7 @@ function normalizeRows(rows){
   return rows.slice(1).map(r=>{
     const o={}; headers.forEach((h,i)=>o[h]=r[i]??"");
     return {
-      date:o.date||o.Date||"",
+      date:normalizeDate(o.date||o.Date||""),
       campaign:o.campaign||o.Campaign||"",
       campaign_id:o.campaign_id||o["Campaign ID"]||"",
       spend:num(o.spend||o["Amount Spent"]),
@@ -55,8 +68,8 @@ function normalizeRows(rows){
 function isoToday(){
   const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 }
-function maxDate(rows){return rows.map(r=>r.date).sort().at(-1)||isoToday();}
-function minDate(rows){return rows.map(r=>r.date).sort()[0]||isoToday();}
+function maxDate(rows){return rows.map(r=>r.date).filter(Boolean).sort().at(-1)||isoToday();}
+function minDate(rows){return rows.map(r=>r.date).filter(Boolean).sort()[0]||isoToday();}
 function addDays(iso,delta){
   const d=new Date(iso+"T12:00:00");d.setDate(d.getDate()+delta);
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
@@ -151,7 +164,7 @@ function renderChart(rows){
     out+=`<circle cx="${x(i)}" cy="${yr(d.results)}" r="3.4" class="dot-results"><title>${d.date}: ${int(d.results)} conversas</title></circle>`;
     const show=days.length<=8||i===0||i===days.length-1||i%Math.ceil(days.length/6)===0;
     if(show){
-      const label=new Date(d.date+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"});
+      const label=humanDate(d.date).slice(0,5);
       out+=`<text x="${x(i)}" y="${H-10}" text-anchor="middle" class="axis-text">${label}</text>`;
     }
   });
@@ -160,6 +173,7 @@ function renderChart(rows){
 function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));}
 function attr(s){return esc(s);}
 function apply(from,to,push=true){
+  from=normalizeDate(from);to=normalizeDate(to);
   if(!from||!to||from>to)return;
   const rows=filterPeriod(from,to);
   const spend=sum(rows,"spend"),results=sum(rows,"results"),clicks=sum(rows,"link_clicks"),cpr=results?spend/results:null;
@@ -174,19 +188,20 @@ function apply(from,to,push=true){
 }
 async function boot(){
   try{
-    const res=await fetch(C.dataCsvUrl,{cache:"no-store"});
+    const separator=C.dataCsvUrl.includes("?")?"&":"?";
+    const res=await fetch(`${C.dataCsvUrl}${separator}_=${Date.now()}`,{cache:"no-store"});
     if(!res.ok)throw new Error("Falha ao carregar dados");
     ALL=normalizeRows(parseCSV(await res.text()));
-    if(!ALL.length)throw new Error("A planilha Dados_Meta está vazia");
+    if(!ALL.length)throw new Error("A planilha Dados_Meta_Limpo está vazia");
     const min=minDate(ALL),max=maxDate(ALL);
     $("#dateFrom").min=min;$("#dateFrom").max=max;$("#dateTo").min=min;$("#dateTo").max=max;
-    const u=new URL(location.href),qf=u.searchParams.get("de"),qt=u.searchParams.get("ate");
+    const u=new URL(location.href),qf=normalizeDate(u.searchParams.get("de")),qt=normalizeDate(u.searchParams.get("ate"));
     const to=(qt&&qt>=min&&qt<=max)?qt:max;
     const from=(qf&&qf>=min&&qf<=to)?qf:(addDays(to,-6)<min?min:addDays(to,-6));
     apply(from,to,false);
     $("#dataStatus").textContent=`Atualizado até ${humanDate(max)}`;
   }catch(e){
-    $("#dataStatus").textContent="Erro ao carregar Dados_Meta";
+    $("#dataStatus").textContent="Erro ao carregar Dados_Meta_Limpo";
     $("#autoInsights").innerHTML=`<div class="insight"><strong>Não foi possível carregar a base</strong><p>${esc(e.message)}</p></div>`;
   }finally{$("#loading").classList.add("hidden");}
 }
